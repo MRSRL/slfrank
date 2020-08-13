@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import sigpy.mri.rf as rf
 
 
-def plot_rf(b1, balanced=False, magphase=False, m=1000):
+def plot_rf(b1, balanced=False, magphase=False, m=1000,
+            omega_range=[-np.pi, np.pi]):
     figs = []
     n = len(b1)
     fig, ax = plt.subplots()
@@ -14,8 +15,8 @@ def plot_rf(b1, balanced=False, magphase=False, m=1000):
     ax.legend()
     figs.append(fig)
 
-    x = np.linspace(-n / 2, n / 2, m)
-    omega = x * 2 * np.pi / n
+    omega = np.linspace(omega_range[0], omega_range[1], m)
+    x = omega * n / (2 * np.pi)
     a, b = rf.abrm(b1, x, balanced=balanced)
     m_xy = 2 * b.conjugate() * a
     m_z = (a * a.conjugate() - b * b.conjugate()).real
