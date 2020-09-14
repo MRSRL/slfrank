@@ -1,4 +1,3 @@
-import numpy as np
 import sigpy as sp
 
 
@@ -9,18 +8,11 @@ class Objective(sp.prox.Prox):
         super().__init__(shape)
 
     def _prox(self, alpha, input):
-        n = len(input) // 2
+        n = (len(input) - 1) // 2
         output = input.copy()
-        output[n - 1, n - 1] += alpha
-        output[2 * n - 1, n - 1] += alpha * self.eps
-        output[n - 1, 2 * n - 1] += alpha * self.eps
+        output[1, 0] += alpha
+        output[0, 1] += alpha
+        output[n + 1, 0] += alpha * self.eps
+        output[0, n + 1] += alpha * self.eps
 
         return sp.psd_proj(output)
-
-
-class MultiBandLinearPhase(sp.prox.Prox):
-
-    def __init__(self, shape, bands):
-        self.m = shape[0]
-        self.bands = bands
-        super().__init__(shape)

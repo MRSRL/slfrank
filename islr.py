@@ -14,12 +14,12 @@ def dzrf(n=64, tb=4, ptype='ex', d1=0.01, d2=0.01,
              [(1 + w) * tb / n * np.pi, np.pi]]
 
     if ptype == 'ex':
-        m_xy_vals = [0, lambda omega: np.exp(1j * omega * (n - 1) / 2), 0]
-        m_xy_errs = [d2, d1, d2]
+        m_xy_vals = [0, lambda omega: np.exp(-1j * omega * (n + 1) / 2), 0]
+        m_xy_deltas = [d2, d1, d2]
         d1_z = (1 - (1 - d1)**2)**0.5
         d2_z = 1 - (1 - d2**2)**0.5
-        m_z_vals = [1 - d2_z / 2, 0, 1 - d2_z / 2]
-        m_z_errs = [d2_z / 2, d1_z, d2_z / 2]
+        m_z_vals = [1, 0, 1]
+        m_z_deltas = [d2_z, d1_z, d2_z]
         if sigma is None:
             sigma = 1000
         if eps is None:
@@ -28,11 +28,11 @@ def dzrf(n=64, tb=4, ptype='ex', d1=0.01, d2=0.01,
             max_iter = 2000
     elif ptype == 'ex-minphase':
         m_xy_vals = [0, 0, 0]
-        m_xy_errs = [d2, 1, d2]
+        m_xy_deltas = [d2, 1, d2]
         d1_z = (1 - (1 - d1)**2)**0.5
         d2_z = 1 - (1 - d2**2)**0.5
-        m_z_vals = [1 - d2_z / 2, 0, 1 - d2_z / 2]
-        m_z_errs = [d2_z / 2, d1_z, d2_z / 2]
+        m_z_vals = [1, 0, 1]
+        m_z_deltas = [d2_z, d1_z, d2_z]
         if sigma is None:
             sigma = 100
         if eps is None:
@@ -43,9 +43,9 @@ def dzrf(n=64, tb=4, ptype='ex', d1=0.01, d2=0.01,
         m_xy_vals = [0, 0, 0]
         d1_xy = (1 - (1 - d1)**2)**0.5
         d2_xy = (1 - (1 - d2)**2)**0.5
-        m_xy_errs = [d2_xy, d1_xy, d2_xy]
-        m_z_vals = [1 - d2 / 2, -1 + d1 / 2, 1 - d2 / 2]
-        m_z_errs = [d2 / 2, d1 / 2, d2 / 2]
+        m_xy_deltas = [d2_xy, d1_xy, d2_xy]
+        m_z_vals = [1, -1, 1]
+        m_z_deltas = [d2, d1, d2]
         if sigma is None:
             sigma = 1000
         if eps is None:
@@ -53,8 +53,8 @@ def dzrf(n=64, tb=4, ptype='ex', d1=0.01, d2=0.01,
         if max_iter is None:
             max_iter = 12000
 
-    m_xy, d_xy = bands_to_arrays(m, bands, m_xy_vals, m_xy_errs)
-    m_z, d_z = bands_to_arrays(m, bands, m_z_vals, m_z_errs)
+    m_xy, d_xy = bands_to_arrays(m, bands, m_xy_vals, m_xy_deltas)
+    m_z, d_z = bands_to_arrays(m, bands, m_z_vals, m_z_deltas)
 
     app = DesignPaulynomials(
         n, m_xy, m_z, d_xy, d_z,
@@ -64,13 +64,13 @@ def dzrf(n=64, tb=4, ptype='ex', d1=0.01, d2=0.01,
         return app.run()
     else:
         a, b = app.run()
-        b1 = rf.ab2rf(a, b)
+        b1 = rf.ab2rf(a[::-1], b[::-1])
         return b1
 
 
 def dzmbrf(n=256, tb=4, ptype='ex', d1=0.01, d2=0.01,
            n_bands=3, band_sep=12, phs_0_pt='None',
-           m=1000, max_iter=None, sigma=None, eps=None):
+           m=4000, max_iter=None, sigma=None, eps=None):
     dinf = rf.dinf(d1, d2)
     w = dinf / tb
     if phs_0_pt != 'None':
@@ -80,20 +80,20 @@ def dzmbrf(n=256, tb=4, ptype='ex', d1=0.01, d2=0.01,
 
     def get_m_xy_func(i):
         return lambda omega: np.exp(
-            -1j * phs[-i - 1] + 1j * omega * (n - 1) / 2)
+            -1j * phs[i] - 1j * omega * (n - 1) / 2)
 
     bands = []
     m_xy_vals = []
-    m_xy_errs = []
+    m_xy_deltas = []
     m_z_vals = []
-    m_z_errs = []
+    m_z_deltas = []
     # First stop band
     center = 2 * np.pi * band_sep * (- (n_bands - 1) / 2) / n
     bands.append([-np.pi, center - (1 + w) * tb / n * np.pi])
     m_xy_vals.append(0)
-    m_xy_errs.append(d2)
+    m_xy_deltas.append(d2)
     m_z_vals.append(1)
-    m_z_errs.append(1 - (1 - d2**2)**0.5)
+    m_z_deltas.append(1 - (1 - d2**2)**0.5)
 
     for i in range(n_bands):
         center = 2 * np.pi * band_sep * (i - (n_bands - 1) / 2) / n
@@ -101,9 +101,9 @@ def dzmbrf(n=256, tb=4, ptype='ex', d1=0.01, d2=0.01,
         bands.append([center - (1 - w) * tb / n * np.pi,
                       center + (1 - w) * tb / n * np.pi])
         m_xy_vals.append(get_m_xy_func(i))
-        m_xy_errs.append(d1)
+        m_xy_deltas.append(d1)
         m_z_vals.append(0)
-        m_z_errs.append((1 - (1 - d1)**2)**0.5)
+        m_z_deltas.append((1 - (1 - d1)**2)**0.5)
 
         # Stop band
         if i == n_bands - 1:
@@ -115,9 +115,9 @@ def dzmbrf(n=256, tb=4, ptype='ex', d1=0.01, d2=0.01,
 
         bands.append([center + (1 + w) * tb / n * np.pi, end])
         m_xy_vals.append(0)
-        m_xy_errs.append(d2)
+        m_xy_deltas.append(d2)
         m_z_vals.append(1)
-        m_z_errs.append(1 - (1 - d2**2)**0.5)
+        m_z_deltas.append(1 - (1 - d2**2)**0.5)
 
     if sigma is None:
         sigma = 1000
@@ -126,16 +126,16 @@ def dzmbrf(n=256, tb=4, ptype='ex', d1=0.01, d2=0.01,
     if max_iter is None:
         max_iter = 2000
 
-    m_xy, d_xy = bands_to_arrays(m, bands, m_xy_vals, m_xy_errs)
-    m_z, d_z = bands_to_arrays(m, bands, m_z_vals, m_z_errs)
+    m_xy, d_xy = bands_to_arrays(m, bands, m_xy_vals, m_xy_deltas)
+    m_z, d_z = bands_to_arrays(m, bands, m_z_vals, m_z_deltas)
 
     a, b = DesignPaulynomials(n, m_xy, m_z, d_xy, d_z,
                               max_iter=max_iter, sigma=sigma, eps=eps).run()
-    b1 = rf.ab2rf(a, b)
+    b1 = rf.ab2rf(a[::-1], b[::-1])
     return b1
 
 
-def bands_to_arrays(m, bands, vals, errs):
+def bands_to_arrays(m, bands, vals, deltas):
     """Convert M_xy and M_z band specifications to arrays.
 
     bands (list of bands): list of frequency bands, specified by
@@ -145,13 +145,13 @@ def bands_to_arrays(m, bands, vals, errs):
         [0, 1, 0].
     linphases (list of floats): desired linear phase for each band.
         Must have the same length as bands.
-    errs (list of floats): maximum deviation from specified profile.
+    deltas (list of floats): maximum deviation from specified profile.
     """
     omega = 2 * np.pi * (np.arange(m) - m // 2) / m
     v = np.zeros(m, dtype=np.complex)
     d = np.ones(m)
 
-    for band, val, delta, in zip(bands, vals, errs):
+    for band, val, delta, in zip(bands, vals, deltas):
         i = (omega >= band[0]) & (omega <= band[1])
         if np.isscalar(val):
             v[i] = val
@@ -202,7 +202,7 @@ class DesignPaulynomials(sp.app.App):
                  [0.5 * np.pi, np.pi]]
         vals = [0, 1, 0]
         linphases = [0, n / 2, 0]
-        errs = [0.01, 0.01, 0.01]
+        deltas = [0.01, 0.01, 0.01]
 
     Returns:
         array, array: alpha and beta polynomials of length n.
@@ -213,11 +213,12 @@ class DesignPaulynomials(sp.app.App):
 
         m = len(m_xy)
         # Create linear operators
-        S_aa = sp.linop.Slice((2 * n, 2 * n), (slice(n), slice(n)))
-        S_ba = sp.linop.Slice((2 * n, 2 * n), (slice(n, 2 * n), slice(n)))
-        S_ab = sp.linop.Slice((2 * n, 2 * n), (slice(n), slice(n, 2 * n)))
+        A_11 = sp.linop.Slice((2 * n + 1, 2 * n + 1), (slice(1), slice(1)))
+        S_aa = sp.linop.Slice((2 * n + 1, 2 * n + 1), (slice(1, n + 1), slice(1, n + 1)))
+        S_ba = sp.linop.Slice((2 * n + 1, 2 * n + 1), (slice(n + 1, 2 * n + 1), slice(1, n + 1)))
+        S_ab = sp.linop.Slice((2 * n + 1, 2 * n + 1), (slice(1, n + 1), slice(n + 1, 2 * n + 1)))
         S_bb = sp.linop.Slice(
-            (2 * n, 2 * n), (slice(n, 2 * n), slice(n, 2 * n)))
+            (2 * n + 1, 2 * n + 1), (slice(n + 1, 2 * n + 1), slice(n + 1, 2 * n + 1)))
 
         D = linop.DiagSum(n)
         R = sp.linop.Resize((m, ), D.oshape)
@@ -227,39 +228,44 @@ class DesignPaulynomials(sp.app.App):
         A_xyc = m**0.5 * F * R * D * (2 * S_ab)
         A_z = m**0.5 * F * R * D * (S_aa - S_bb)
         A_I = D * (S_aa + S_bb)
-        As = [A_xy, A_xyc, A_z, A_I]
+        As = [A_11, A_xy, A_xyc, A_z, A_I]
         A = sp.linop.Vstack(As)
 
         # Create proximal operators
         dirac = np.zeros(2 * n - 1)
         dirac[n - 1] = 1
 
+        proxf_1 = sp.prox.LInfProj([1], 0, 1)
         proxf_xy = sp.prox.LInfProj(A_xy.oshape, d_xy, m_xy)
         proxf_xyc = sp.prox.LInfProj(A_xyc.oshape, d_xy, np.conj(m_xy))
         proxf_z = sp.prox.LInfProj(A_z.oshape, d_z, m_z)
         proxf_I = sp.prox.LInfProj(A_I.oshape, 0, dirac)
         proxf = sp.prox.Stack([
-            proxf_xy, proxf_xyc, proxf_z, proxf_I])
+            proxf_1, proxf_xy, proxf_xyc, proxf_z, proxf_I])
         proxfc = sp.prox.Conj(proxf)
 
-        proxg = prox.Objective((2 * n, 2 * n), eps)
+        proxg = prox.Objective((2 * n + 1, 2 * n + 1), eps)
 
         # Get step-size
+        sigma_1 = sigma
         sigma_xy = sigma / (4 * n * m)
         sigma_z = sigma / (2 * n * m)
         sigma_I = sigma / (2 * n)
         tau = 1 / sigma
         sigma = np.concatenate(
-            [np.full(A_xy.oshape, sigma_xy),
+            [[sigma_1],
+             np.full(A_xy.oshape, sigma_xy),
              np.full(A_xyc.oshape, sigma_xy),
              np.full(A_z.oshape, sigma_z),
              np.full(A_I.oshape, sigma_I)])
 
         # Get variables
-        self.P = np.zeros((2 * n, 2 * n), dtype=np.complex)
+        self.X = np.zeros((2 * n + 1, 2 * n + 1), dtype=np.complex)
+        self.a = self.X[1:n + 1, 0]
+        self.b = self.X[n + 1:, 0]
         u = np.zeros(A.oshape, dtype=np.complex)
         alg = sp.alg.PrimalDualHybridGradient(
-            proxfc, proxg, A, A.H, self.P, u, tau, sigma,
+            proxfc, proxg, A, A.H, self.X, u, tau, sigma,
             max_iter=max_iter)
         self.m_xy = m_xy
         self.m_z = m_z
@@ -273,18 +279,20 @@ class DesignPaulynomials(sp.app.App):
 
     def _summarize(self):
         if self.show_pbar:
-            A_xy, A_xyc, A_z, A_I = self.As
-            a, b, err_rank1 = P_to_ab(self.P, return_err=True)
+            A_11, A_xy, A_xyc, A_z, A_I = self.As
             err_xy = np.max(
-                np.clip(np.abs(A_xy(self.P) - self.m_xy) - self.d_xy, 0, None))
+                np.clip(np.abs(A_xy(self.X) - self.m_xy) - self.d_xy, 0, None))
             err_z = np.max(
-                np.clip(np.abs(A_z(self.P) - self.m_z) - self.d_z, 0, None))
-            err_I = np.max(np.abs(A_I(self.P) - self.dirac))
+                np.clip(np.abs(A_z(self.X) - self.m_z) - self.d_z, 0, None))
+            err_I = np.max(np.abs(A_I(self.X) - self.dirac))
 
-            n = len(self.P) // 2
-            obj = self.P[n - 1, n - 1]
-            obj += self.eps * self.P[n - 1, 2 * n - 1]
-            obj += self.eps * self.P[2 * n - 1, n - 1]
+            w, v = np.linalg.eigh(self.X)
+            err_rank1 = np.sum(w[:-1])
+            n = (len(self.X) + 1) // 2
+            obj = self.X[1, 0]
+            obj += self.X[0, 1]
+            obj += self.eps * self.X[0, n + 1]
+            obj += self.eps * self.X[n + 1, 0]
             obj = np.real(obj)
             self.pbar.set_postfix(err_rank1='{0:.2E}'.format(err_rank1),
                                   err_I='{0:.2E}'.format(err_I),
@@ -293,161 +301,4 @@ class DesignPaulynomials(sp.app.App):
                                   obj='{0:.2E}'.format(obj))
 
     def _output(self):
-        if self.return_P:
-            return self.P
-        else:
-            return P_to_ab(self.P)
-
-
-class DesignMultibandPaulynomials(sp.app.App):
-    """Design Shinnar-Le-Roux polynomials given an Mxy profile.
-
-    Args:
-        n (int): number of hard pulses.
-        m_xy (array): transverse magnetization.
-        sigma (float): dual step-size.
-        max_iter (int): maximum number of iterations.
-        m (int): number of points for discretizing the frequency response.
-
-    Example:
-        n = 64
-        bands = [[-np.pi, -0.5 * np.pi],
-                 [-0.25 * np.pi, 0.25 * np.pi],
-                 [0.5 * np.pi, np.pi]]
-        vals = [0, 1, 0]
-        linphases = [0, n / 2, 0]
-        errs = [0.01, 0.01, 0.01]
-
-    Returns:
-        array, array: alpha and beta polynomials of length n.
-
-    """
-    def __init__(self, n, tb, d1=0.01, d2=0.01, n_bands=3, band_sep=12,
-                 m=2000, sigma=1000, eps=1, max_iter=10000, return_P=False):
-        # Create bands
-        dinf = rf.dinf(d1, d2)
-        w = dinf / tb
-        omega = 2 * np.pi * (np.arange(m) - m // 2) / m
-        d_xy = np.ones(m)
-        m_z = np.zeros(m)
-        d_z = np.ones(m)
-        # First stop band
-        center = 2 * np.pi * band_sep * (- (n_bands - 1) / 2) / n
-        idx = (omega >= -np.pi) & (omega <= center - (1 + w) * tb / n * np.pi)
-        d_xy[idx] = d2
-        m_z[idx] = 1
-        d_z[idx] = (1 - (1 - d2**2)**0.5)
-
-        linphase = np.zeros([m, n_bands], dtype=np.complex)
-        for i in range(n_bands):
-            center = 2 * np.pi * band_sep * (i - (n_bands - 1) / 2) / n
-            # Pass band
-            idx = (omega >= center - (1 - w) * tb / n * np.pi) & \
-                (omega <= center + (1 - w) * tb / n * np.pi)
-            linphase[idx, i] = np.exp(1j * omega[idx] * (n - 1) / 2)
-            d_xy[idx] = d1
-            m_z[idx] = 0
-            d_z[idx] = (1 - (1 - d1)**2)**0.5
-
-            # Stop band
-            if i == n_bands - 1:
-                end = np.pi
-            else:
-                next_center = 2 * np.pi * band_sep * (
-                    i + 1 - (n_bands - 1) / 2) / n
-                end = next_center - (1 + w) * tb / n * np.pi
-
-            idx = (omega >= center + (1 + w) * tb / n * np.pi) & \
-                (omega <= end)
-            d_xy[idx] = d2
-            m_z[idx] = 1
-            d_z[idx] = (1 - (1 - d2**2)**0.5)
-
-        # Create linear operators
-        S_aa = sp.linop.Slice((2 * n, 2 * n), (slice(n), slice(n)))
-        S_ba = sp.linop.Slice((2 * n, 2 * n), (slice(n, 2 * n), slice(n)))
-        S_ab = sp.linop.Slice((2 * n, 2 * n), (slice(n), slice(n, 2 * n)))
-        S_bb = sp.linop.Slice(
-            (2 * n, 2 * n), (slice(n, 2 * n), slice(n, 2 * n)))
-
-        D = linop.DiagSum(n)
-        R = sp.linop.Resize((m, ), D.oshape)
-        F = sp.linop.FFT((m, ))
-
-        A_xy = m**0.5 * F * R * D * (2 * S_ba)
-        A_xyc = m**0.5 * F * R * D * (2 * S_ab)
-        A_z = m**0.5 * F * R * D * (S_aa - S_bb)
-        A_I = D * (S_aa + S_bb)
-        As = [A_xy, A_xyc, A_z, A_I]
-        A = sp.linop.Vstack(As)
-
-        # Create proximal operators
-        dirac = np.zeros(2 * n - 1)
-        dirac[n - 1] = 1
-
-        proxf_xy = sp.prox.LInfProj(A_xy.oshape, d_xy)
-        proxf_xyc = sp.prox.LInfProj(A_xyc.oshape, d_xy)
-        proxf_z = sp.prox.LInfProj(A_z.oshape, d_z, m_z)
-        proxf_I = sp.prox.LInfProj(A_I.oshape, 0, dirac)
-        proxf = sp.prox.Stack([
-            proxf_xy, proxf_xyc, proxf_z, proxf_I])
-        proxfc = sp.prox.Conj(proxf)
-
-        proxg = sp.prox.Stack(
-            [sp.prox.UnitaryTransform(prox.Objective((2 * n, 2 * n), eps),
-                                      sp.linop.Reshape((2 * n, 2 * n), [4 * n**2])),
-             sp.prox.NoOp([2 * n_bands])])
-
-        # Get step-size
-        sigma_xy = sigma / (4 * n * m)
-        sigma_z = sigma / (2 * n * m)
-        sigma_I = sigma / (2 * n)
-        tau = 1 / sigma
-        sigma = np.concatenate(
-            [np.full(A_xy.oshape, sigma_xy),
-             np.full(A_xyc.oshape, sigma_xy),
-             np.full(A_z.oshape, sigma_z),
-             np.full(A_I.oshape, sigma_I)])
-
-        # Get variables
-        self.x = np.zeros([4 * n**2 + 2 * n_bands], dtype=np.complex)
-        self.P = self.x[:4 * n**2].reshape((2 * n, 2 * n))
-        u = np.zeros(A.oshape, dtype=np.complex)
-        alg = sp.alg.PrimalDualHybridGradient(
-            proxfc, proxg, A, A.H, self.x, u, tau, sigma,
-            max_iter=max_iter)
-        self.m_z = m_z
-        self.d_xy = d_xy
-        self.d_z = d_z
-        self.As = As
-        self.eps = eps
-        self.dirac = dirac
-        self.return_P = return_P
-        super().__init__(alg)
-
-    def _summarize(self):
-        if self.show_pbar:
-            A_xy, A_xyc, A_z, A_I = self.As
-            a, b, err_rank1 = P_to_ab(self.P, return_err=True)
-            err_xy = np.max(
-                np.clip(np.abs(A_xy(self.x)) - self.d_xy, 0, None))
-            err_z = np.max(
-                np.clip(np.abs(A_z(self.x) - self.m_z) - self.d_z, 0, None))
-            err_I = np.max(np.abs(A_I(self.x) - self.dirac))
-
-            n = len(self.P) // 2
-            obj = self.P[n - 1, n - 1]
-            obj += self.eps * self.P[n - 1, 2 * n - 1]
-            obj += self.eps * self.P[2 * n - 1, n - 1]
-            obj = np.real(obj)
-            self.pbar.set_postfix(err_rank1='{0:.2E}'.format(err_rank1),
-                                  err_I='{0:.2E}'.format(err_I),
-                                  err_xy='{0:.2E}'.format(err_xy),
-                                  err_z='{0:.2E}'.format(err_z),
-                                  obj='{0:.2E}'.format(obj))
-
-    def _output(self):
-        if self.return_P:
-            return self.P
-        else:
-            return P_to_ab(self.P)
+        return self.a, self.b

@@ -4,7 +4,8 @@ import sigpy.mri.rf as rf
 
 
 def plot_rf(b1, m=1000,
-            refocus_linphase=0,
+            spin_echo=False,
+            linphase=0,
             omega_range=[-np.pi, np.pi]):
     figs = []
     n = len(b1)
@@ -21,26 +22,36 @@ def plot_rf(b1, m=1000,
     x = omega * n / (2 * np.pi)
     g = np.ones(n) * 2 * np.pi / n
     a, b = rf.abrm_hp(b1, g, x)
-    m_xy = 2 * a.conjugate() * b
-    m_z = (a * a.conjugate() - b * b.conjugate()).real
-    m_xy *= np.exp(1j * omega * refocus_linphase)
 
-    fig, ax = plt.subplots()
-    ax.set_title(r'$|M_{\mathrm{xy}}|$')
-    ax.set_xlabel(r'$\omega$ [radian]')
-    ax.plot(omega, np.abs(m_xy))
-    figs.append(fig)
+    if spin_echo:
+        m_xy = -b**2
+        fig, ax = plt.subplots()
+        ax.set_title(r'$M_{\mathrm{xy}}$')
+        ax.set_xlabel(r'$\omega$ [radian]')
+        ax.plot(omega, np.real(m_xy), label=r'$M_{\mathrm{x}}$')
+        ax.plot(omega, np.imag(m_xy), label=r'$M_{\mathrm{y}}$')
+        figs.append(fig)
+    else:
+        m_xy = 2 * a.conjugate() * b
+        m_z = (a * a.conjugate() - b * b.conjugate()).real
+        m_xy *= np.exp(1j * omega * linphase)
 
-    fig, ax = plt.subplots()
-    ax.set_title(r'$\angle M_{\mathrm{xy}}$')
-    ax.set_xlabel(r'$\omega$ [radian]')
-    ax.plot(omega, np.angle(m_xy))
-    figs.append(fig)
+        fig, ax = plt.subplots()
+        ax.set_title(r'$|M_{\mathrm{xy}}|$')
+        ax.set_xlabel(r'$\omega$ [radian]')
+        ax.plot(omega, np.abs(m_xy))
+        figs.append(fig)
 
-    fig, ax = plt.subplots()
-    ax.set_title(r'$M_{\mathrm{z}}$')
-    ax.set_xlabel(r'$\omega$ [radian]')
-    ax.plot(omega, m_z)
-    figs.append(fig)
+        fig, ax = plt.subplots()
+        ax.set_title(r'$\angle M_{\mathrm{xy}}$')
+        ax.set_xlabel(r'$\omega$ [radian]')
+        ax.plot(omega, np.angle(m_xy))
+        figs.append(fig)
+
+        fig, ax = plt.subplots()
+        ax.set_title(r'$M_{\mathrm{z}}$')
+        ax.set_xlabel(r'$\omega$ [radian]')
+        ax.plot(omega, m_z)
+        figs.append(fig)
 
     return figs
