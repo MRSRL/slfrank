@@ -1,12 +1,12 @@
 import numpy as np
 import sigpy as sp
+import sigpy.mri.rf as rf
 import linop
 import prox
-import sigpy.mri.rf as rf
 
 
 def dzrf(n=64, tb=4, ptype='ex', d1=0.01, d2=0.01,
-         m=1000, max_iter=None, sigma=None, eps=None, return_P=False):
+         m=1000, max_iter=None, sigma=None, lamda=None, return_P=False):
     dinf = rf.dinf(d1, d2)
     w = dinf / tb
     bands = [[-np.pi, -(1 + w) * tb / n * np.pi],
@@ -22,8 +22,8 @@ def dzrf(n=64, tb=4, ptype='ex', d1=0.01, d2=0.01,
         m_z_deltas = [d2_z, d1_z, d2_z]
         if sigma is None:
             sigma = 1000
-        if eps is None:
-            eps = 0
+        if lamda is None:
+            lamda = 0
         if max_iter is None:
             max_iter = 2000
     elif ptype == 'ex-minphase':
@@ -35,8 +35,8 @@ def dzrf(n=64, tb=4, ptype='ex', d1=0.01, d2=0.01,
         m_z_deltas = [d2_z, d1_z, d2_z]
         if sigma is None:
             sigma = 100
-        if eps is None:
-            eps = 1
+        if lamda is None:
+            lamda = 1
         if max_iter is None:
             max_iter = 12000
     elif ptype == 'inv':
@@ -48,17 +48,17 @@ def dzrf(n=64, tb=4, ptype='ex', d1=0.01, d2=0.01,
         m_z_deltas = [d2, d1, d2]
         if sigma is None:
             sigma = 1000
-        if eps is None:
-            eps = 1
+        if lamda is None:
+            lamda = 1
         if max_iter is None:
-            max_iter = 12000
+            max_iter = 20000
 
     m_xy, d_xy = bands_to_arrays(m, bands, m_xy_vals, m_xy_deltas)
     m_z, d_z = bands_to_arrays(m, bands, m_z_vals, m_z_deltas)
 
     app = DesignPaulynomials(
         n, m_xy, m_z, d_xy, d_z,
-        return_P=return_P, max_iter=max_iter, sigma=sigma, eps=eps)
+        return_P=return_P, max_iter=max_iter, sigma=sigma, lamda=lamda)
 
     if return_P:
         return app.run()
@@ -70,7 +70,7 @@ def dzrf(n=64, tb=4, ptype='ex', d1=0.01, d2=0.01,
 
 def dzmbrf(n=256, tb=4, ptype='ex', d1=0.01, d2=0.01,
            n_bands=3, band_sep=12, phs_0_pt='None',
-           m=4000, max_iter=None, sigma=None, eps=None):
+           m=4000, max_iter=None, sigma=None, lamda=None):
     dinf = rf.dinf(d1, d2)
     w = dinf / tb
     if phs_0_pt != 'None':
@@ -121,8 +121,8 @@ def dzmbrf(n=256, tb=4, ptype='ex', d1=0.01, d2=0.01,
 
     if sigma is None:
         sigma = 1000
-    if eps is None:
-        eps = 0
+    if lamda is None:
+        lamda = 0
     if max_iter is None:
         max_iter = 2000
 
@@ -130,7 +130,7 @@ def dzmbrf(n=256, tb=4, ptype='ex', d1=0.01, d2=0.01,
     m_z, d_z = bands_to_arrays(m, bands, m_z_vals, m_z_deltas)
 
     a, b = DesignPaulynomials(n, m_xy, m_z, d_xy, d_z,
-                              max_iter=max_iter, sigma=sigma, eps=eps).run()
+                              max_iter=max_iter, sigma=sigma, lamda=lamda).run()
     b1 = rf.ab2rf(a[::-1], b[::-1])
     return b1
 
@@ -209,7 +209,7 @@ class DesignPaulynomials(sp.app.App):
 
     """
     def __init__(self, n, m_xy, m_z, d_xy, d_z,
-                 sigma=100, eps=0, max_iter=10000, return_P=False):
+                 sigma=100, lamda=0, max_iter=10000, return_P=False):
 
         m = len(m_xy)
         # Create linear operators
@@ -244,7 +244,7 @@ class DesignPaulynomials(sp.app.App):
             proxf_1, proxf_xy, proxf_xyc, proxf_z, proxf_I])
         proxfc = sp.prox.Conj(proxf)
 
-        proxg = prox.Objective((2 * n + 1, 2 * n + 1), eps)
+        proxg = prox.Objective((2 * n + 1, 2 * n + 1), lamda)
 
         # Get step-size
         sigma_1 = sigma
@@ -272,7 +272,7 @@ class DesignPaulynomials(sp.app.App):
         self.d_xy = d_xy
         self.d_z = d_z
         self.As = As
-        self.eps = eps
+        self.lamda = lamda
         self.dirac = dirac
         self.return_P = return_P
         super().__init__(alg)
@@ -291,8 +291,8 @@ class DesignPaulynomials(sp.app.App):
             n = (len(self.X) + 1) // 2
             obj = self.X[1, 0]
             obj += self.X[0, 1]
-            obj += self.eps * self.X[0, n + 1]
-            obj += self.eps * self.X[n + 1, 0]
+            obj += self.lamda * self.X[0, n + 1]
+            obj += self.lamda * self.X[n + 1, 0]
             obj = np.real(obj)
             self.pbar.set_postfix(err_rank1='{0:.2E}'.format(err_rank1),
                                   err_I='{0:.2E}'.format(err_I),
