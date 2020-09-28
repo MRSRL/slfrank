@@ -1,11 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import sigpy.mri.rf as rf
+from . import transform
 
 
-def plot_rf(b1, m=1000,
-            spin_echo=False,
-            linphase=0,
+def plot_rf(b1, m=1000, ptype='ex', phase='linear',
             omega_range=[-np.pi, np.pi]):
     figs = []
     n = len(b1)
@@ -19,22 +17,26 @@ def plot_rf(b1, m=1000,
     figs.append(fig)
 
     omega = np.linspace(omega_range[0], omega_range[1], m)
-    x = omega * n / (2 * np.pi)
-    g = np.ones(n) * 2 * np.pi / n
-    a, b = rf.abrm_hp(b1, g, x)
+    psi_z = np.exp(-1j * np.outer(omega, np.arange(n)))
+    a, b = transform.forward_slr(b1)
+    alpha = psi_z @ a
+    beta = psi_z @ b
 
-    if spin_echo:
-        m_xy = -b**2
+    if ptype == 'se':
+        m_xy = beta**2
+        m_xy *= np.exp(1j * omega * (n - 1))
         fig, ax = plt.subplots()
         ax.set_title(r'$M_{\mathrm{xy}}$')
         ax.set_xlabel(r'$\omega$ [radian]')
         ax.plot(omega, np.real(m_xy), label=r'$M_{\mathrm{x}}$')
         ax.plot(omega, np.imag(m_xy), label=r'$M_{\mathrm{y}}$')
+        ax.legend()
         figs.append(fig)
     else:
-        m_xy = 2 * a.conjugate() * b
-        m_z = (a * a.conjugate() - b * b.conjugate()).real
-        m_xy *= np.exp(1j * omega * linphase)
+        m_xy = 2 * alpha.conjugate() * beta
+        m_z = np.abs(alpha)**2 - np.abs(beta)**2
+        if phase == 'linear':
+            m_xy *= np.exp(1j * omega * n / 2)
 
         fig, ax = plt.subplots()
         ax.set_title(r'$|M_{\mathrm{xy}}|$')

@@ -9,4 +9,5 @@ Depends on
 	numpy
 	sigpy
 	matplotlib
+	cvxpy
 
