@@ -8,11 +8,12 @@ class Objective(sp.prox.Prox):
         super().__init__(shape)
 
     def _prox(self, alpha, input):
+        xp = sp.get_array_module(input)
         n = (len(input) - 1) // 2
         output = input.copy()
         output[1, 0] += alpha
-        output[0, 1] += alpha
         output[n + 1, 0] += alpha * self.lamda
-        output[0, n + 1] += alpha * self.lamda
 
-        return sp.psd_proj(output)
+        w, v = xp.linalg.eigh(output)
+        w[w < 0] = 0
+        return (v * w) @ v.conjugate().T

@@ -12,11 +12,12 @@ def hard_pulse(a, b, b1):
             in representation consistent with input.
 
     """
-    phi = np.abs(b1)
-    theta = np.angle(b1)
+    c = np.cos(abs(b1) / 2)
+    if abs(b1) == 0:
+        s = 0
+    else:
+        s = 1j * b1 / abs(b1) * np.sin(abs(b1) / 2)
 
-    c = np.cos(phi / 2)
-    s = 1j * np.exp(1j * theta) * np.sin(phi / 2)
     return c * a - s.conjugate() * b, s * a + c * b
 
 
@@ -27,8 +28,13 @@ def inverse_hard_pulse(a, b):
     theta = np.angle(-1j * b[0] * a[0].conjugate())
     b1 = phi * np.exp(1j * theta)
 
-    c = np.cos(phi / 2)
-    s = 1j * np.exp(1j * theta) * np.sin(phi / 2)
+    abs_ab = (abs(a[0])**2 + abs(b[0])**2)**0.5
+    if abs_ab == 0:
+        c = 0
+        s = 0
+    else:
+        c = a[0] / abs_ab
+        s = b[0] / abs_ab
     return c * a + s.conjugate() * b, -s * a + c * b, b1
 
 

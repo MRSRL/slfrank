@@ -4,7 +4,7 @@ from . import transform
 
 
 def plot_rf(b1, m=1000, ptype='ex', phase='linear',
-            omega_range=[-np.pi, np.pi]):
+            omega_range=[-np.pi, np.pi], log=True):
     figs = []
     n = len(b1)
     fig, ax = plt.subplots()
@@ -39,9 +39,10 @@ def plot_rf(b1, m=1000, ptype='ex', phase='linear',
             m_xy *= np.exp(1j * omega * n / 2)
 
         fig, ax = plt.subplots()
-        ax.set_title(r'$|M_{\mathrm{xy}}|$')
+        ax.set_title(r'$\log |M_{\mathrm{xy}}|$')
         ax.set_xlabel(r'$\omega$ [radian]')
-        ax.plot(omega, np.abs(m_xy))
+        ax.semilogy(omega, np.abs(m_xy))
+        ax.set_ylim(1e-3, 2)
         figs.append(fig)
 
         fig, ax = plt.subplots()
