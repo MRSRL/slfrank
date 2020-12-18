@@ -4,16 +4,19 @@ from . import transform
 
 
 def plot_rf(b1, m=1000, ptype='ex', phase='linear',
-            omega_range=[-np.pi, np.pi], log=True):
+            omega_range=[-np.pi, np.pi],
+            linewidth=3, fontsize='x-large', labelsize='large'):
     figs = []
     n = len(b1)
     fig, ax = plt.subplots()
-    ax.plot(b1.real, label=r'$B_{1, \mathrm{x}}$')
-    ax.plot(b1.imag, label=r'$B_{1, \mathrm{y}}$')
-    ax.set_title(r'$B_1$ (Energy={0:.3g}, Max={1:.3g})'.format(
-        np.sum(np.abs(b1)**2), np.max(np.abs(b1))))
-    ax.set_xlabel('Time')
-    ax.legend()
+    ax.plot(b1.real, label=r'$B_{1, \mathrm{x}}$', linewidth=linewidth)
+    ax.plot(b1.imag, label=r'$B_{1, \mathrm{y}}$', linewidth=linewidth)
+    ax.set_title(r'$B_1$ (Energy={0:.3g}, Peak={1:.3g})'.format(
+        np.sum(np.abs(b1)**2), np.max(np.abs(b1))), fontsize=fontsize)
+    ax.set_xlabel('Time', fontsize=fontsize)
+    ax.legend(fontsize=fontsize)
+    ax.yaxis.set_tick_params(labelsize=labelsize)
+    ax.xaxis.set_tick_params(labelsize=labelsize)
     figs.append(fig)
 
     omega = np.linspace(omega_range[0], omega_range[1], m)
@@ -28,9 +31,11 @@ def plot_rf(b1, m=1000, ptype='ex', phase='linear',
         fig, ax = plt.subplots()
         ax.set_title(r'$M_{\mathrm{xy}}$')
         ax.set_xlabel(r'$\omega$ [radian]')
-        ax.plot(omega, np.real(m_xy), label=r'$M_{\mathrm{x}}$')
-        ax.plot(omega, np.imag(m_xy), label=r'$M_{\mathrm{y}}$')
-        ax.legend()
+        ax.plot(omega, np.real(m_xy), label=r'$M_{\mathrm{x}}$', linewidth=linewidth)
+        ax.plot(omega, np.imag(m_xy), label=r'$M_{\mathrm{y}}$', linewidth=linewidth)
+        ax.legend(fontsize=fontsize)
+        ax.yaxis.set_tick_params(labelsize=labelsize)
+        ax.xaxis.set_tick_params(labelsize=labelsize)
         figs.append(fig)
     else:
         m_xy = 2 * alpha.conjugate() * beta
@@ -39,22 +44,27 @@ def plot_rf(b1, m=1000, ptype='ex', phase='linear',
             m_xy *= np.exp(1j * omega * n / 2)
 
         fig, ax = plt.subplots()
-        ax.set_title(r'$\log |M_{\mathrm{xy}}|$')
-        ax.set_xlabel(r'$\omega$ [radian]')
-        ax.semilogy(omega, np.abs(m_xy))
-        ax.set_ylim(1e-3, 2)
+        ax.set_title(r'$|M_{\mathrm{xy}}|$', fontsize=fontsize)
+        ax.set_xlabel(r'$\omega$ [radian]', fontsize=fontsize)
+        ax.plot(omega, np.abs(m_xy), linewidth=linewidth)
+        ax.yaxis.set_tick_params(labelsize=labelsize)
+        ax.xaxis.set_tick_params(labelsize=labelsize)
         figs.append(fig)
 
         fig, ax = plt.subplots()
-        ax.set_title(r'$\angle M_{\mathrm{xy}}$')
-        ax.set_xlabel(r'$\omega$ [radian]')
-        ax.plot(omega, np.angle(m_xy))
+        ax.set_title(r'$\angle M_{\mathrm{xy}}$', fontsize=fontsize)
+        ax.set_xlabel(r'$\omega$ [radian]', fontsize=fontsize)
+        ax.plot(omega, np.angle(m_xy), linewidth=linewidth)
+        ax.yaxis.set_tick_params(labelsize=labelsize)
+        ax.xaxis.set_tick_params(labelsize=labelsize)
         figs.append(fig)
 
         fig, ax = plt.subplots()
-        ax.set_title(r'$M_{\mathrm{z}}$')
-        ax.set_xlabel(r'$\omega$ [radian]')
-        ax.plot(omega, m_z)
+        ax.set_title(r'$M_{\mathrm{z}}$', fontsize=fontsize)
+        ax.set_xlabel(r'$\omega$ [radian]', fontsize=fontsize)
+        ax.plot(omega, m_z, linewidth=linewidth)
+        ax.yaxis.set_tick_params(labelsize=labelsize)
+        ax.xaxis.set_tick_params(labelsize=labelsize)
         figs.append(fig)
 
     return figs
