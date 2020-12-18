@@ -29,7 +29,7 @@ def design_rf(n=64, tb=4, ptype='ex', d1=0.01, d2=0.01, phase='linear',
                 sigma = 1000
             if max_iter is None:
                 max_iter = 3000
-    elif ptype == 'ex' and phase == 'min':
+    elif ptype == 'ex' and phase in ['min', 'max']:
         m_xy_vals = [0, 0, 0]
         m_xy_deltas = [d2, 1, d2]
         m_z_vals = [1, 0, 1]
@@ -42,7 +42,7 @@ def design_rf(n=64, tb=4, ptype='ex', d1=0.01, d2=0.01, phase='linear',
             sigma = 100
         if max_iter is None:
             max_iter = 20000
-    elif ptype == 'sat' and phase == 'min':
+    elif ptype == 'sat' and phase in ['min', 'max']:
         m_xy_vals = [0, 0, 0]
         m_xy_deltas = [(1 - (1 - d2)**2)**0.5, 1, (1 - (1 - d2)**2)**0.5]
         m_z_vals = [1, 0, 1]
@@ -55,7 +55,7 @@ def design_rf(n=64, tb=4, ptype='ex', d1=0.01, d2=0.01, phase='linear',
             sigma = 1000
         if max_iter is None:
             max_iter = 10000
-    elif ptype == 'inv' and phase == 'min':
+    elif ptype == 'inv' and phase in ['min', 'max']:
         m_xy_vals = [0, 0, 0]
         m_xy_deltas = [(1 - (1 - d2)**2)**0.5, (1 - (1 - d1)**2)**0.5, (1 - (1 - d2)**2)**0.5]
         m_z_vals = [1, -1, 1]
@@ -102,6 +102,9 @@ def design_rf(n=64, tb=4, ptype='ex', d1=0.01, d2=0.01, phase='linear',
             lamda=lamda, solver=solver, verbose=verbose)
 
     b1 = transform.inverse_slr(a, b * 1j)
+    if phase == 'max':
+        b1 = b1[::-1]
+
     return b1
 
 
