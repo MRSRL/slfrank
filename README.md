@@ -1,13 +1,7 @@
-# Improved Shinnar-Le-Roux Pulse Design Algorithm
+# SLfRank: Improved Shinnar-Le-Roux Pulse Design using Rank Factorization
 
-This repo contains code for an improved Shinnar-Le-Roux pulse design algorithm.
+This repo contains code for the SLfRank pulse design algorithm.
 
 ## Installation
 
-Depends on
-
-	numpy
-	sigpy
-	matplotlib
-	cvxpy
-
+     pip install -r requirements.txt
