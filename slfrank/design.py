@@ -7,7 +7,7 @@ from . import linop, prox, transform
 
 
 def design_rf(n=64, tb=4, ptype='ex', d1=0.01, d2=0.01, phase='linear',
-              oversamp=8, lamda=None, solver='PDHG',
+              oversamp=15, lamda=None, solver='PDHG',
               max_iter=None, sigma=None, verbose=True):
     dinf = rf.dinf(d1, d2)
     w = dinf / tb
