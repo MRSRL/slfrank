@@ -9,6 +9,35 @@ from . import linop, prox, transform
 def design_rf(n=64, tb=4, ptype='ex', d1=0.01, d2=0.01, phase='linear',
               oversamp=15, lamda=None, solver='PDHG',
               max_iter=None, sigma=None, verbose=True):
+    """Design single-band RF pulse using SLfRank.
+
+    Args:
+        n (int): length of RF pulse.
+        tb (float): time-bandwidth product.
+        ptype (str): pulse type. Can be
+            'ex' for excitation,
+            'sat' for saturation,
+            'inv' for inversion,
+            'se' for spin-echo refocussing.
+        d1 (float): pass-band ripple.
+        d2 (float): stop-band ripple.
+        phase (str): phase phase. Can be
+            'linear' for linear phase,
+            'min' for minimnum phase,
+            'max' for maximum phase.
+        oversamp (int): oversampling for number of points in frequency domain.
+        lamda (float or None): minimum phase parameter.
+        solver (str): solver name. Can be
+            'PDHG' for primal-dual hybrid gradient using SigPy,
+            'SCS' or 'MOSEK' for solvers in CVXPy.
+        max_iter (int or None): maxmimum number of iterations for PDHG.
+        sigma (float or None): step-size parameter for PDHG.
+        verbose (bool): verbose print-out.
+
+    Return:
+        array: length-n RF pulse.
+
+    """
     dinf = rf.dinf(d1, d2)
     w = dinf / tb
     bands = [[-np.pi, -(1 + w) * tb / n * np.pi],
@@ -109,16 +138,22 @@ def design_rf(n=64, tb=4, ptype='ex', d1=0.01, d2=0.01, phase='linear',
 
 
 def bands_to_arrays(omega, bands, vals, deltas):
-    """Convert M_xy and M_z band specifications to arrays.
+    """Convert magnetization band specifications to arrays.
 
-    bands (list of bands): list of frequency bands, specified by
-         starting and end points in radians between -pi to pi.
-    vals (list of floats): desired magnitude response for each band.
-        Must have the same length as bands. For example,
-        [0, 1, 0].
-    linphases (list of floats): desired linear phase for each band.
-        Must have the same length as bands.
-    deltas (list of floats): maximum deviation from specified profile.
+    Args:
+        omega (array): array of frequency values between -pi to pi.
+        bands (list of bands): list of frequency bands, specified by
+             starting and end points in radians between -pi to pi.
+        vals (list of floats or functions): 
+            desired magnitude response for each band.
+            Must have the same length as bands. For example,
+            [0, 1, 0].
+        deltas (list of floats or functions): 
+            maximum deviation for each band.
+
+    Return:
+        (array, array): magnetization array and maximum deviation array
+            evaluated on omega.
     """
     m = len(omega)
     v = np.zeros(m, dtype=np.complex)
@@ -140,26 +175,23 @@ def bands_to_arrays(omega, bands, vals, deltas):
 
 
 class DesignPaulynomials(sp.app.App):
-    """Design Shinnar-Le-Roux polynomials given magnetization profiles.
+    """Design Shinnar-Le-Roux polynomials given desired profiles using SigPy.
 
     Args:
         n (int): number of hard pulses.
-        m_xy (array): transverse magnetization.
+        omega (array): array of frequency values between -pi to pi.
+        m_xy (array): desired transverse magnetization evaluated on omega.
+        d_xy (array): desired transverse ripple size evaluated on omega.
+        m_z (array): desired longitudinal magnetization evaluated on omega.
+        d_xy (array): desired longitudinal ripple size evaluated on omega.
+        beta_z (array): desired beta parameter evaluated on omega.
+        beta_xy (array): desired beta parameter ripple size evaluated on omega.
         sigma (float): dual step-size.
+        lamda (float): minimum phase pulse parameter.
         max_iter (int): maximum number of iterations.
-        m (int): number of points for discretizing the frequency response.
-
-    Example:
-        n = 64
-        bands = [[-np.pi, -0.5 * np.pi],
-                 [-0.25 * np.pi, 0.25 * np.pi],
-                 [0.5 * np.pi, np.pi]]
-        vals = [0, 1, 0]
-        linphases = [0, n / 2, 0]
-        deltas = [0.01, 0.01, 0.01]
 
     Returns:
-        array, array: alpha and beta polynomials of length n.
+        array, array: Cayley-Klein polynomials of length n.
 
     """
     def __init__(self, n, omega, m_xy, d_xy, m_z, d_z, beta, d_beta,
@@ -266,7 +298,23 @@ class DesignPaulynomials(sp.app.App):
 
 def design_paulynomials(n, omega, m_xy, d_xy, m_z, d_z, beta, d_beta,
                         verbose=False, lamda=0, solver='SCS'):
-    """Design Paulynomials.
+    """Design Shinnar-Le-Roux polynomials given desired profiles using CVXPy.
+
+    Args:
+        n (int): number of hard pulses.
+        omega (array): array of frequency values between -pi to pi.
+        m_xy (array): desired transverse magnetization evaluated on omega.
+        d_xy (array): desired transverse ripple size evaluated on omega.
+        m_z (array): desired longitudinal magnetization evaluated on omega.
+        d_xy (array): desired longitudinal ripple size evaluated on omega.
+        beta_z (array): desired beta parameter evaluated on omega.
+        beta_xy (array): desired beta parameter ripple size evaluated on omega.
+        verbose (bool): verbose print-out.
+        lamda (float): minimum phase pulse parameter.
+        solver (str): solver name.
+
+    Returns:
+        array, array: Cayley-Klein polynomials of length n.
 
     """
     # Initialize variables

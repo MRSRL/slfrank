@@ -4,7 +4,12 @@ import numba as nb
 
 
 class DiagSum(sp.linop.Linop):
+    """A Linop that sums along the diagonals of a matrix.
+    
+    Args:
+        n (int): width of matrix.
 
+    """
     def __init__(self, n):
         self.n = n
         super().__init__((2 * n - 1, ), (n, n))
@@ -17,6 +22,12 @@ class DiagSum(sp.linop.Linop):
 
 
 class DiagEmbed(sp.linop.Linop):
+    """A Linop that embeds an array along the diagonals of a matrix.
+    
+    Args:
+        n (int): width of matrix.
+
+    """
     def __init__(self, n):
         self.n = n
         super().__init__((n, n), (2 * n - 1, ))
