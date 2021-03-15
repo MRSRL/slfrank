@@ -7,5 +7,4 @@ You can install dependent libraries by running
 
      pip install -r requirements.txt
 
-To get started, you can run the demo notebook `demo.ipynb` locally or through myBinder:
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/mrsrl/slfrank/master)
+To get started, you can run the demo notebook `demo.ipynb` locally or `demo_colab.ipynb` through Colab: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/MRSRL/slfrank/blob/master/demo_colab.ipynb)
