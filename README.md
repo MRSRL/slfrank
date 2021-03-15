@@ -2,7 +2,7 @@
 
 This repo contains code for the SLfRank pulse design algorithm. SLfRank can generate pulses with lower energy (by as much as 26%) and more accurate phase profiles when compared to the SLR pulse design algorithm.
 
-The code depends on SigPy and CVXPy.
+The code depends on SigPy.RF and CVXPy.
 You can install dependent libraries by running
 
      pip install -r requirements.txt
