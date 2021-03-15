@@ -1,6 +1,6 @@
 # SLfRank: Shinnar-Le-Roux Pulse Design using Rank Factorization
 
-This repo contains code for the SLfRank pulse design algorithm.
+This repo contains code for the SLfRank pulse design algorithm. The Shinnar-Le-Roux (SLR) algorithm is widely used to design frequency selective pulses with large flip angles. We improve its design process to generate pulses with lower energy (by as much as 26%) and more accurate phase profiles.
 
 The code depends on SigPy and CVXPy.
 You can install dependent libraries by running
