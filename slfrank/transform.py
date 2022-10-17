@@ -27,14 +27,8 @@ def inverse_hard_pulse(a, b):
     phi = 2 * np.arctan2(np.abs(b[0]), np.abs(a[0]))
     theta = np.angle(-1j * b[0] * a[0].conjugate())
     b1 = phi * np.exp(1j * theta)
-
-    abs_ab = (abs(a[0])**2 + abs(b[0])**2)**0.5
-    if abs_ab == 0:
-        c = 0
-        s = 0
-    else:
-        c = a[0] / abs_ab
-        s = b[0] / abs_ab
+    c_unnormalized = a[0]
+    s_unnormalized = b[0]
     return c * a + s.conjugate() * b, -s * a + c * b, b1
 
 
