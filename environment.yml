@@ -1,0 +1,13 @@
+name: slfrank
+channels:
+  - frankong
+  - main
+  - conda-forge
+  - defaults
+dependencies:
+  - cvxpy==1.2.1
+  - matplotlib==3.5.3
+  - numpy==1.19.5
+  - python==3.8.16
+  - scipy==1.9.1
+  - sigpy==0.1.23
