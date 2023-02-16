@@ -1,6 +1,9 @@
 import simple_parsing as sp
 import dataclasses as dc
 import pathlib as plib
+import logging
+
+logModule = logging.getLogger(__name__)
 
 
 @dc.dataclass
@@ -23,8 +26,8 @@ class Config(sp.helpers.Serializable):
         # create default_dict
         default_instance = cls()
         instance = cls()
-        if args.config.ConfigFile:
-            confPath = plib.Path(args.config.ConfigFile).absolute()
+        if args.config.configFile:
+            confPath = plib.Path(args.config.configFile).absolute()
             instance = cls.load(confPath)
             # might contain defaults
         for key, item in default_instance.__dict__.items():
@@ -34,6 +37,11 @@ class Config(sp.helpers.Serializable):
                 # update instance even if changed by config file -> that way prioritize cmd line input
                 instance.__setattr__(key, parsed_arg)
         return instance
+
+    def display(self):
+        logModule.info(f"Parameters:\n")
+        for key, value in self.__dict__.items():
+            logModule.info(f"\t\t{key}: \t\t {value}")
 
 
 def createCommandlineParser():
@@ -49,8 +57,9 @@ def createCommandlineParser():
 
 
 if __name__ == '__main__':
-    save_path = plib.Path("./js/default_conf.json").absolute()
+    save_path = plib.Path("default_conf.json").absolute()
     save_path.parent.mkdir(parents=True, exist_ok=True)
     conf = Config()
+    conf.display()
     conf.save(save_path)
 

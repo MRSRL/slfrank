@@ -17,21 +17,21 @@ import logging
 
 
 def main(opts: options.Config):
+    opts.display()
     gamma_Hz = 42577478.518
     bandwidth = gamma_Hz * opts.desiredSliceGrad * 1e-3 * opts.desiredSliceThickness * 1e-3
     if opts.desiredDuration > 0:
-        duration_in_us = opts.desiredDuration
-        time_bandwidth = bandwidth * duration_in_us * 1e-6
+        opts.timeBandwidth = bandwidth * opts.desiredDuration * 1e-6
     else:
-        time_bandwidth = opts.timeBandwidth
-        duration_in_us = int(time_bandwidth / bandwidth * 1e6)
+        opts.desiredDuration = int(opts.timeBandwidth / bandwidth * 1e6)
 
+    opts.display()
     # init object
     slr_pulse = rfpf.RF(
         name="slfrank_lin_phase_refocus",
-        duration_in_us=duration_in_us,
+        duration_in_us=opts.desiredDuration,
         bandwidth_in_Hz=bandwidth,
-        time_bandwidth=time_bandwidth,
+        time_bandwidth=opts.timeBandwidth,
         num_samples=opts.numSamples
     )
 
@@ -40,12 +40,12 @@ def main(opts: options.Config):
     pulse_type = opts.pulseType
     phase_type = opts.phaseType
 
-    logging.info(f"Generating pulse\n"
-                 f"\t\t\t\t\t__type: {pulse_type} - __phase type {phase_type}")
+    logging.info(f"Generating pulse"
+                 f"\t\t__type: {pulse_type} \t __phase type {phase_type}")
 
     # getting length n complex array
     pulse_slfrank = slfrank.design_rf(
-        n=opts.numSamples, tb=time_bandwidth,
+        n=opts.numSamples, tb=opts.timeBandwidth,
         ptype=pulse_type, phase=phase_type,
         d1=opts.rippleSizes, d2=opts.rippleSizes,
         solver=solver, max_iter=opts.maxIter)
@@ -59,7 +59,7 @@ def main(opts: options.Config):
     fig = slfrank.plot_slr_pulses(
             np.full_like(pulse_slfrank, np.nan, dtype=complex),
             pulse_slfrank, ptype=pulse_type, phase=phase_type,
-            omega_range=[-1, 1], tb=time_bandwidth, d1=opts.rippleSizes, d2=opts.rippleSizes)
+            omega_range=[-1, 1], tb=opts.timeBandwidth, d1=opts.rippleSizes, d2=opts.rippleSizes)
     plt.tight_layout()
     plt.show()
 
@@ -84,10 +84,10 @@ if __name__ == '__main__':
     parser, args = options.createCommandlineParser()
 
     logging.info("set parameters")
-    opts = options.Config.from_cmd_args(args)
+    conf_opts = options.Config.from_cmd_args(args)
 
     try:
-        main(opts)
+        main(conf_opts)
     except Exception as e:
         logging.error(e)
         parser.print_usage()
