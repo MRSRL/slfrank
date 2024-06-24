@@ -1,0 +1,1 @@
+{"configFile": "", "outputPath": "./pulses/", "numSamples": 300, "timeBandwidth": 2.75, "desiredDuration": 0, "desiredSliceGrad": 35.0, "desiredSliceThickness": 0.7, "rippleSizes": 0.01, "pulseType": "ex", "phaseType": "linear", "maxIter": 2500}
