@@ -156,7 +156,7 @@ def bands_to_arrays(omega, bands, vals, deltas):
             evaluated on omega.
     """
     m = len(omega)
-    v = np.zeros(m, dtype=np.complex)
+    v = np.zeros(m, dtype=complex)
     d = np.ones(m)
 
     for band, val, delta, in zip(bands, vals, deltas):
@@ -247,11 +247,11 @@ class DesignPaulynomials(sp.app.App):
              np.full(A_I.oshape, sigma_I)])
 
         # Get variables
-        self.X = np.zeros((2 * n + 1, 2 * n + 1), dtype=np.complex)
+        self.X = np.zeros((2 * n + 1, 2 * n + 1), dtype=complex)
         self.X[0, 0] = 1
         self.a = self.X[1:n + 1, 0]
         self.b = self.X[n + 1:, 0]
-        u = np.zeros(A.oshape, dtype=np.complex)
+        u = np.zeros(A.oshape, dtype=complex)
         alg = sp.alg.PrimalDualHybridGradient(
             proxfc, proxg, A, A.H, self.X, u, tau, sigma,
             max_iter=max_iter)
@@ -332,7 +332,7 @@ def design_paulynomials(n, omega, m_xy, d_xy, m_z, d_z, beta, d_beta,
     constraints = [X >> 0, X[0, 0] == 1]
 
     # Trace equals to 1
-    dirac = np.zeros(2 * n - 1, dtype=np.complex)
+    dirac = np.zeros(2 * n - 1, dtype=complex)
     dirac[n - 1] = 1
     constraints.append(diag_sum(aa + bb) == dirac)
 
